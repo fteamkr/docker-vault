@@ -1,0 +1,23 @@
+# https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md
+version: "3.8"
+
+services:
+  #https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#service-configuration-reference
+
+  vault:
+    # https://hub.docker.com/r/hashicorp/vault
+    # https://github.com/hashicorp/vault/blob/main/Dockerfile
+    image: hashicorp/vault
+
+    ports:
+      - "8200:8200"
+
+    environment:
+      # https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#environment
+      VAULT_LOCAL_CONFIG: "{\"storage\": {\"file\": {\"path\": \"/vault/file\"}}, \"listener\": [{\"tcp\": { \"address\": \"0.0.0.0:8200\", \"tls_disable\": true}}], \"default_lease_ttl\": \"168h\", \"max_lease_ttl\": \"720h\", \"ui\": true}"
+
+    cap_add:
+      # https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#cap_add-cap_drop
+      - IPC_LOCK
+
+    command: server
