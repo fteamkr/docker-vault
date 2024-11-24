@@ -1,0 +1,114 @@
+# https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md
+# https://docs.docker.com/compose/intro/history/
+version: "3.8"
+
+services:
+  # https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#service-configuration-reference
+
+  vault-1:
+    # https://hub.docker.com/r/hashicorp/vault
+    # https://github.com/hashicorp/vault/blob/main/Dockerfile
+    image: hashicorp/vault
+
+    deploy:
+      # https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#deploy
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          # docker node update --label-add node-no=1 node1
+          - "node.labels.node-no==1"
+
+    environment:
+      # https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#environment
+      # https://developer.hashicorp.com/vault/docs/configuration/listener/tcp
+      # https://developer.hashicorp.com/vault/docs/configuration/storage/raft
+      VAULT_LOCAL_CONFIG: '{"api_addr": "http://vault-1:8200", "cluster_addr": "http://vault-1:8201", "storage": {"raft": {"node_id ": "vault-1", "path": "/vault/file", "retry_join": [{"leader_api_addr": "http://vault-2:8200"}, {"leader_api_addr": "http://vault-3:8200"}]}}, "listener": [{"tcp": { "address": "0.0.0.0:8200", "cluster_address": "0.0.0.0:8201", "tls_disable": true}}], "default_lease_ttl": "168h", "max_lease_ttl": "720h", "ui": true, "disable_mlock": true}'
+      SKIP_SETCAP: "true"
+
+    volumes:
+      # https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#volumes
+      - "./vault-1/logs:/vault/logs"
+      - "./vault-1/file:/vault/file"
+
+    networks:
+      # https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#networks
+      vault-network:
+
+    command: ["server", "-log-level=info"]
+
+  vault-2:
+    # https://hub.docker.com/r/hashicorp/vault
+    # https://github.com/hashicorp/vault/blob/main/Dockerfile
+    image: hashicorp/vault
+
+    depends_on:
+      - vault-1
+
+    deploy:
+      # https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#deploy
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          # docker node update --label-add node-no=node2 node2
+          - "node.labels.node-no==2"
+
+    environment:
+      # https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#environment
+      # https://developer.hashicorp.com/vault/docs/configuration/listener/tcp
+      # https://developer.hashicorp.com/vault/docs/configuration/storage/raft
+      VAULT_LOCAL_CONFIG: '{"api_addr": "http://vault-2:8200", "cluster_addr": "http://vault-2:8201", "storage": {"raft": {"node_id ": "vault-2", "path": "/vault/file", "retry_join": [{"leader_api_addr": "http://vault-1:8200"}, {"leader_api_addr": "http://vault-3:8200"}]}}, "listener": [{"tcp": { "address": "0.0.0.0:8200", "cluster_address": "0.0.0.0:8201", "tls_disable": true}}], "default_lease_ttl": "168h", "max_lease_ttl": "720h", "ui": true, "disable_mlock": true}'
+      SKIP_SETCAP: "true"
+
+    volumes:
+      # https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#volumes
+      - "./vault-2/logs:/vault/logs"
+      - "./vault-2/file:/vault/file"
+
+    networks:
+      # https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#networks
+      vault-network:
+
+    command: ["server", "-log-level=info"]
+
+  vault-3:
+    # https://hub.docker.com/r/hashicorp/vault
+    # https://github.com/hashicorp/vault/blob/main/Dockerfile
+    image: hashicorp/vault
+
+    depends_on:
+      - vault-3
+
+    deploy:
+      # https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#deploy
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          # docker node update --label-add node-no=node3 node3
+          - "node.labels.node-no==3"
+
+    environment:
+      # https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#environment
+      # https://developer.hashicorp.com/vault/docs/configuration/listener/tcp
+      # https://developer.hashicorp.com/vault/docs/configuration/storage/raft
+      VAULT_LOCAL_CONFIG: '{"api_addr": "http://vault-3:8200", "cluster_addr": "http://vault-3:8201", "storage": {"raft": {"node_id ": "vault-3", "path": "/vault/file", "retry_join": [{"leader_api_addr": "http://vault-1:8200"}, {"leader_api_addr": "http://vault-2:8200"}]}}, "listener": [{"tcp": { "address": "0.0.0.0:8200", "cluster_address": "0.0.0.0:8201", "tls_disable": true}}], "default_lease_ttl": "168h", "max_lease_ttl": "720h", "ui": true, "disable_mlock": true}'
+      SKIP_SETCAP: "true"
+
+    volumes:
+      # https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#volumes
+      - "./vault-3/logs:/vault/logs"
+      - "./vault-3/file:/vault/file"
+
+    networks:
+      # https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#networks
+      vault-network:
+
+    command: ["server", "-log-level=info"]
+
+networks:
+  # https://github.com/docker/compose/blob/v1/docs/Compose%20file%20reference%20(legacy)/version-3.md#network-configuration-reference
+  vault-network:
+    name: vault-network
+    driver: overlay
